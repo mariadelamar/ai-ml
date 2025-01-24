@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="author" content="MarianneBM">
+  <meta name="keywords" content="Tic-Tac-Toe, game, two-player, computer, play, interactive, web game, JavaScript game, strategy, fun, free game">
+  <meta name="description" content="Play Tic-Tac-Toe against the computer or with a friend in this interactive web-based game. Test your strategy and have fun!">
+  <title>Tic-Tac-Toe</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    
+  <div class="game-container">
+    <h1>Tic-Tac-Toe</h1>
+    <div class="board">
+      <button class="cell" data-cell-index="0"></button>
+      <button class="cell" data-cell-index="1"></button>
+      <button class="cell" data-cell-index="2"></button>
+      <button class="cell" data-cell-index="3"></button>
+      <button class="cell" data-cell-index="4"></button>
+      <button class="cell" data-cell-index="5"></button>
+      <button class="cell" data-cell-index="6"></button>
+      <button class="cell" data-cell-index="7"></button>
+      <button class="cell" data-cell-index="8"></button>
+    </div>
+    <button class="reset-button">Reset</button>
+  </div>
+  
+  
+  <script>
+const cells = document.querySelectorAll('.cell');
+const resetButton = document.querySelector('.reset-button');
+let currentPlayer = 'X';  // Player is X, computer is O
+let board = ['', '', '', '', '', '', '', '', ''];
+
+const displayMessage = (message) => {
+  const messageElement = document.querySelector('.message');
+  if (messageElement) {
+    messageElement.textContent = message;
+  } else {
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message');
+    messageElement.textContent = message;
+    document.querySelector('.game-container').appendChild(messageElement);
+  }
+};
+
+const checkWinner = () => {
+  const winPatterns = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ];
+
+  for (const pattern of winPatterns) {
+    const [a, b, c] = pattern;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return board[a];  // Return winner ('X' or 'O')
+    }
+  }
+  if (board.every(cell => cell)) {
+    return "Tie";  // Return "Tie" if all cells are filled
+  }
+  return null;  // Return null if no winner
+};
+
+const minimax = (board, depth, isMaximizing) => {
+  const winner = checkWinner();
+  if (winner === 'X') return -10 + depth;
+  if (winner === 'O') return 10 - depth;
+  if (winner === "Tie") return 0;
+
+  let bestScore = isMaximizing ? -Infinity : Infinity;
+  const availableMoves = [];
+
+  for (let i = 0; i < 9; i++) {
+    if (!board[i]) {
+      availableMoves.push(i);
+    }
+  }
+
+  for (let move of availableMoves) {
+    board[move] = isMaximizing ? 'O' : 'X';
+    const score = minimax(board, depth + 1, !isMaximizing);
+    board[move] = ''; // Undo move
+
+    if (isMaximizing) {
+      bestScore = Math.max(score, bestScore);
+    } else {
+      bestScore = Math.min(score, bestScore);
+    }
+  }
+
+  return bestScore;
+};
+
+const computerMove = () => {
+  let bestMove = -1;
+  let bestScore = -Infinity;
+
+  for (let i = 0; i < 9; i++) {
+    if (!board[i]) {
+      board[i] = 'O';  // Try move
+      const score = minimax(board, 0, false);
+      board[i] = ''; // Undo move
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = i;
+      }
+    }
+  }
+
+  board[bestMove] = 'O';
+  cells[bestMove].textContent = 'O';
+  const winner = checkWinner();
+  if (winner) {
+    displayMessage(winner === 'X' ? "You win!" : "Computer wins!");
+    return true; // Stop the game
+  }
+  currentPlayer = 'X';  // Switch back to player
+  return false;  // Continue the game
+};
+
+const handleClick = (event) => {
+  const cellIndex = event.target.getAttribute('data-cell-index');
+  if (board[cellIndex]) return;
+  board[cellIndex] = currentPlayer;
+  event.target.textContent = currentPlayer;
+  event.target.setAttribute('data-player', currentPlayer); 
+
+  const winner = checkWinner();
+  if (winner) {
+    displayMessage(winner === 'X' ? "You win!" : winner === 'O' ? "Computer wins!" : "It's a tie!");
+    return; // Stop the game after displaying winner message
+  }
+
+  currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; // Switch player
+  if (currentPlayer === 'O') {
+    if (computerMove()) {
+      return; // Stop if computer wins
+    }
+  }
+};
+
+
+const resetGame = () => {
+  board = ['', '', '', '', '', '', '', '', ''];
+  cells.forEach(cell => {
+    cell.textContent = '';
+    cell.removeAttribute('data-player'); 
+  });
+  currentPlayer = 'X';
+
+  // Clear any existing messages
+  const messageElement = document.querySelector('.message');
+  if (messageElement) {
+    messageElement.remove(); // Remove the message
+  }
+};
+
+cells.forEach(cell => {
+  cell.addEventListener('click', handleClick);
+});
+
+resetButton.addEventListener('click', resetGame);
+
+  </script>
+</body>
+</html>
